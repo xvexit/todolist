@@ -18,21 +18,17 @@ func NewPostgresRepo(conn *pgx.Conn) *PostgresRepo {
 	}
 }
 
-func InitDatabase(ctx context.Context) (*pgx.Conn, error) {
-	conn, err := connectDatabase(ctx)
+func InitDatabase(ctx context.Context, connstr string) (*pgx.Conn, error) {
+	conn, err := pgx.Connect(ctx, connstr)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := setTables(ctx, conn); err != nil {
-		return nil, err
-	}
+	// if err := setTables(ctx, conn); err != nil {
+	// 	return nil, err
+	// }
 
 	return conn, nil
-}
-
-func connectDatabase(ctx context.Context) (*pgx.Conn, error) {
-	return pgx.Connect(ctx, "postgres://postgres:123qwe@localhost:5432/postgres")
 }
 
 func setTables(ctx context.Context, conn *pgx.Conn) error {
@@ -54,11 +50,11 @@ func setTables(ctx context.Context, conn *pgx.Conn) error {
 func (p *PostgresRepo) AddTask(ctx context.Context, t *entity.Task) error {
 
 	query := `
-	INSERT INTO tasks (name, text, time_add, is_done) 
-	VALUES ($1, $2, $3, $4)
+	INSERT INTO tasks (name, text, time_add, is_done, is_important) 
+	VALUES ($1, $2, $3, $4, $5)
 	`
 
-	_, err := p.conn.Exec(ctx, query, t.Name, t.Text, t.Time_add, t.Is_done)
+	_, err := p.conn.Exec(ctx, query, t.Name, t.Text, t.Time_add, t.Is_done, t.Is_important)
 	return err
 }
 
@@ -79,17 +75,18 @@ func (p *PostgresRepo) Update(ctx context.Context, t *entity.Task) error {
 	text = $2,
 	time_add = $3,
 	is_done = $4,
-	time_done = $5
-	WHERE name = $6	
+	time_done = $5,
+	is_important = $6
+	WHERE name = $7	
 	`
 
-	_, err := p.conn.Exec(ctx, query, t.Name, t.Text, t.Time_add, t.Is_done, t.Time_done, t.Name)
+	_, err := p.conn.Exec(ctx, query, t.Name, t.Text, t.Time_add, t.Is_done, t.Time_done, t.Is_important, t.Name)
 	return err
 }
 
 func (p *PostgresRepo) GetAllTasks(ctx context.Context) ([]entity.Task, error) {
 	query := `
-	SELECT name, text, time_add, is_done, time_done
+	SELECT name, text, time_add, is_done, time_done, is_important
 	FROM tasks
 	`
 
@@ -103,12 +100,14 @@ func (p *PostgresRepo) GetAllTasks(ctx context.Context) ([]entity.Task, error) {
 	var tasks []entity.Task
 	for rows.Next() {
 		var t entity.Task
+
 		if err := rows.Scan(
 			&t.Name,
 			&t.Text,
 			&t.Time_add,
 			&t.Is_done,
 			&t.Time_done,
+			&t.Is_important,
 		); err != nil {
 			return nil, err
 		}
@@ -120,24 +119,23 @@ func (p *PostgresRepo) GetAllTasks(ctx context.Context) ([]entity.Task, error) {
 
 func (p *PostgresRepo) GetTaskByName(ctx context.Context, name string) (*entity.Task, error) {
 	query := `
-	SELECT name, text, time_add, is_done, time_done
+	SELECT name, text, time_add, is_done, time_done, is_important
 	FROM tasks
 	WHERE name = $1
 	`
 	row := p.conn.QueryRow(ctx, query, name)
 
 	var t entity.Task
-
 	if err := row.Scan(
 		&t.Name,
 		&t.Text,
 		&t.Time_add,
 		&t.Is_done,
 		&t.Time_done,
+		&t.Is_important,
 	); err != nil {
 		return nil, err
 	}
-
 
 	return &t, nil
 }
@@ -145,20 +143,20 @@ func (p *PostgresRepo) GetTaskByName(ctx context.Context, name string) (*entity.
 func (p *PostgresRepo) GetAllTasksPages(ctx context.Context, n int) (map[int][]entity.Task, error) {
 
 	var total int
-	if err := p.conn.QueryRow(ctx, `SELECT COUNT(*) FROM tasks`).Scan(&total); err != nil{
+	if err := p.conn.QueryRow(ctx, `SELECT COUNT(*) FROM tasks`).Scan(&total); err != nil {
 		return nil, err
 	}
 	fmt.Println(total)
 	tasksPages := make(map[int][]entity.Task)
 
 	var pages int
-	if total%n == 0{
-		pages = total/n
-	}else{
-		pages = (total/n)+1
+	if total%n == 0 {
+		pages = total / n
+	} else {
+		pages = (total / n) + 1
 	}
 
-	for i := 0; i < pages; i++{
+	for i := 0; i < pages; i++ {
 		query := `
 		SELECT name, text, time_add, is_done, time_done
 		FROM tasks ORDER BY id ASC
