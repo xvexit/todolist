@@ -7,6 +7,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"runtime"
@@ -15,9 +16,13 @@ import (
 	"strings"
 )
 
+// "postgres://postgres:123qwe@localhost:5432/postgres"
+
 func main() {
 	ctx := context.Background()
-	conn, err := database.InitDatabase(ctx)
+	connstr := os.Getenv("CONN_STRING")
+	log.Println(connstr)
+	conn, err := database.InitDatabase(ctx, connstr)
 	if err != nil {
 		panic(err)
 	}
@@ -31,7 +36,7 @@ func main() {
 
 	for scan.Scan() {
 		fmt.Print("> ")
-		
+
 		command := strings.Fields(scan.Text())
 
 		switch command[0] {
@@ -143,12 +148,14 @@ func printTaskPretty(t entity.Task) {
 Описание : %s
 Создано  : %s
 Выполнено: %s
+Важное   : %d
 `,
 		status,
 		t.Name,
 		t.Text,
 		t.Time_add.Format("02.01.2006 15:04"),
 		doneTime,
+		t.Is_important,
 	)
 }
 

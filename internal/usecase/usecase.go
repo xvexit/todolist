@@ -16,7 +16,7 @@ func NewUsecase(ctx context.Context, repo TaskListRepo) *Usecases {
 }
 
 func (uc *Usecases) AddTask(ctx context.Context, name, text string) error {
-	task := entity.NewTask(name, text)
+	task := entity.NewTask(name, text, 0)
 	if err := uc.repo.AddTask(ctx, task); err != nil {
 		return err
 	}
