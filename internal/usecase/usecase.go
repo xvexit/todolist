@@ -9,7 +9,7 @@ type Usecases struct {
 	repo TaskListRepo
 }
 
-func NewUsecase(ctx context.Context, repo TaskListRepo) *Usecases {
+func NewUsecase(repo TaskListRepo) *Usecases {
 	return &Usecases{
 		repo: repo,
 	}

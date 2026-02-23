@@ -1,13 +1,14 @@
 package main
 
 import (
+	"ToDoList/internal/controllers"
 	"ToDoList/internal/entity"
 	database "ToDoList/internal/infrastructure"
 	"ToDoList/internal/usecase"
+	"ToDoList/server"
 	"bufio"
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"runtime"
@@ -19,16 +20,28 @@ import (
 // "postgres://postgres:123qwe@localhost:5432/postgres"
 
 func main() {
+
+	os.Create("out/newfile.txt")
+
 	ctx := context.Background()
+
 	connstr := os.Getenv("CONN_STRING")
-	log.Println(connstr)
 	conn, err := database.InitDatabase(ctx, connstr)
 	if err != nil {
 		panic(err)
 	}
 	repo := database.NewPostgresRepo(conn)
-	uc := usecase.NewUsecase(ctx, repo)
+	fmt.Println("Connect Database Postgres")
+
+	uc := usecase.NewUsecase(repo)
 	defer conn.Close(ctx)
+
+	controller := controllers.NewController(uc)
+	server := server.NewHTTPServer(controller)
+	if err := server.StartHttpServer(); err != nil{
+		fmt.Println("Server starting error:", err)
+	}
+
 	fmt.Println("=== ToDo List Application ===")
 	fmt.Println("Введите 'help' для просмотра доступных команд")
 
