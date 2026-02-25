@@ -117,7 +117,7 @@ func (p *PostgresRepo) GetAllTasks(ctx context.Context) ([]entity.Task, error) {
 	return tasks, nil
 }
 
-func (p *PostgresRepo) GetTaskById(ctx context.Context, id int) (*entity.Task, error) {
+func (p *PostgresRepo) GetTaskById(ctx context.Context, id int64) (*entity.Task, error) {
 	query := `
 	SELECT id, name, text, time_add, is_done, time_done, is_important
 	FROM tasks

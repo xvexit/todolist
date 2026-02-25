@@ -26,7 +26,12 @@ func NewTask(name, text string, isImp int) *Task {
 }
 
 func (l *Task) DoTask() {
-	l.Is_done = true
-	tn := time.Now()
-	l.Time_done = &tn
+	if l.Is_done == true{
+		l.Is_done = false
+		l.Time_done = nil
+	}else{
+		l.Is_done = true
+		tn := time.Now()
+		l.Time_done = &tn
+	}
 }

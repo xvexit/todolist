@@ -101,4 +101,27 @@ func (c *Controller) HandleDeleteTask(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (c *Controller) HandleDoTask(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), time.Second*60)
+	defer cancel()
 
+	vars := mux.Vars(r)
+	idstr, ok := vars["id"]
+	if !ok || idstr == "" {
+		http.Error(w, NewErrorDto("id parameter is missing").ToString(), http.StatusBadRequest)
+		return
+	}
+
+	id, err := strconv.ParseInt(idstr, 10, 64)
+	if err != nil {
+		http.Error(w, NewErrorDto("invalid id format").ToString(), http.StatusBadRequest)
+		return
+	}
+
+	if err := c.uc.DoTask(ctx, id); err != nil{
+		http.Error(w, NewErrorDto(err.Error()).ToString(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}

@@ -23,7 +23,7 @@ func (uc *Usecases) AddTask(ctx context.Context, name, text string) error {
 	return nil
 }
 
-func (uc *Usecases) DoTask(ctx context.Context, id int) error {
+func (uc *Usecases) DoTask(ctx context.Context, id int64) error {
 
 	task, err := uc.repo.GetTaskById(ctx, id)
 	if err != nil {
@@ -40,7 +40,7 @@ func (uc *Usecases) DoTask(ctx context.Context, id int) error {
 }
 
 func (uc *Usecases) DelTask(ctx context.Context, id int64) error {
-	return uc.repo.DeleteTask(ctx, (id))
+	return uc.repo.DeleteTask(ctx, id)
 }
 
 func (uc *Usecases) TaskList(ctx context.Context) ([]entity.Task, error) {
