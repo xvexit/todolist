@@ -23,9 +23,9 @@ func (uc *Usecases) AddTask(ctx context.Context, name, text string) error {
 	return nil
 }
 
-func (uc *Usecases) DoTask(ctx context.Context, name string) error {
+func (uc *Usecases) DoTask(ctx context.Context, id int) error {
 
-	task, err := uc.repo.GetTaskByName(ctx, name)
+	task, err := uc.repo.GetTaskById(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -39,24 +39,15 @@ func (uc *Usecases) DoTask(ctx context.Context, name string) error {
 	return nil
 }
 
-func (uc *Usecases) DelTask(ctx context.Context, name string) error {
-
-	task, err := uc.repo.GetTaskByName(ctx, name)
-	if err != nil {
-		return err
-	}
-
-	if err := uc.repo.DeleteTask(ctx, task); err != nil {
-		return err
-	}
-
-	return nil
+func (uc *Usecases) DelTask(ctx context.Context, id int64) error {
+	return uc.repo.DeleteTask(ctx, (id))
 }
 
 func (uc *Usecases) TaskList(ctx context.Context) ([]entity.Task, error) {
 	return uc.repo.GetAllTasks(ctx)
 }
 
-func (uc *Usecases) GetAllTasksInPages(ctx context.Context, n int)(map[int][]entity.Task, error){
+func (uc *Usecases) GetAllTasksInPages(ctx context.Context, n int) (map[int][]entity.Task, error) {
 	return uc.repo.GetAllTasksPages(ctx, n)
 }
+

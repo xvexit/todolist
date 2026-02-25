@@ -6,7 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
+
+	"github.com/gorilla/mux"
 )
 
 type Controller struct {
@@ -47,24 +50,55 @@ func (c *Controller) HandlerAddTask(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (c *Controller) HandleTaskList(w http.ResponseWriter, r *http.Request){
+func (c *Controller) HandleTaskList(w http.ResponseWriter, r *http.Request) {
 	сtx, cancel := context.WithTimeout(r.Context(), time.Second*60)
 	defer cancel()
 	tasks, err := c.uc.TaskList(сtx)
-	if err != nil{
+	if err != nil {
 		http.Error(w, NewErrorDto(err.Error()).ToString(), http.StatusInternalServerError)
 		return
 	}
 
 	b, err := json.MarshalIndent(tasks, "", "    ")
-	if err != nil{
+	if err != nil {
 		http.Error(w, NewErrorDto(err.Error()).ToString(), http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	if _, err := w.Write(b); err != nil{
+	if _, err := w.Write(b); err != nil {
 		fmt.Println("failed to write HTTP response", err)
 		return
 	}
 }
+
+func (c *Controller) HandleDeleteTask(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), time.Second*60)
+	defer cancel()
+
+	vars := mux.Vars(r)
+	idstr, ok := vars["id"]
+	if !ok || idstr == "" {
+		http.Error(w, NewErrorDto("id parameter is missing").ToString(), http.StatusBadRequest)
+		return
+	}
+
+	id, err := strconv.ParseInt(idstr, 10, 64)
+	if err != nil {
+		http.Error(w, NewErrorDto("invalid id format").ToString(), http.StatusBadRequest)
+		return
+	}
+
+	if err := c.uc.DelTask(ctx, id); err != nil{
+		http.Error(w, NewErrorDto(err.Error()).ToString(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write([]byte("Deleted!")); err != nil{
+		fmt.Println("failed to write HTTP response", err)
+		return
+	}
+}
+
+

@@ -5,6 +5,7 @@ import (
 )
 
 type Task struct {
+	Id           int64
 	Name         string
 	Text         string
 	Time_add     time.Time
@@ -14,6 +15,7 @@ type Task struct {
 }
 
 func NewTask(name, text string, isImp int) *Task {
+
 	return &Task{
 		Name:         name,
 		Text:         text,

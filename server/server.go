@@ -25,6 +25,7 @@ func (s *HTTPServer) StartHttpServer() error {
 
 	router.Path("/tasks").Methods("POST").HandlerFunc(s.handlers.HandlerAddTask)
 	router.Path("/tasks").Methods("GET").HandlerFunc(s.handlers.HandleTaskList)
+	router.Path("/tasks/{id}").Methods("DELETE").HandlerFunc(s.handlers.HandleDeleteTask)
 
 	fmt.Println("Server starting on :5050...")
 	err := http.ListenAndServe(":5050", router)
