@@ -4,6 +4,7 @@ import (
 	"ToDoList/internal/controllers"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -23,6 +24,15 @@ func (s *HTTPServer) StartHttpServer() error {
 
 	router := mux.NewRouter()
 
+	router.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			log.Printf("REQUEST → %s %s from %s",
+				r.Method, r.URL.Path, r.RemoteAddr)
+			next.ServeHTTP(w, r)
+		})
+	})
+
+	router.Path("/tasks/{id}").Methods("PATCH").HandlerFunc(s.handlers.HandleDoTask)
 	router.Path("/tasks").Methods("POST").HandlerFunc(s.handlers.HandlerAddTask)
 	router.Path("/tasks").Methods("GET").HandlerFunc(s.handlers.HandleTaskList)
 	router.Path("/tasks/{id}").Methods("DELETE").HandlerFunc(s.handlers.HandleDeleteTask)

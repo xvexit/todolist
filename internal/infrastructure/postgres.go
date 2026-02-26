@@ -5,6 +5,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -24,27 +27,30 @@ func InitDatabase(ctx context.Context, connstr string) (*pgx.Conn, error) {
 		return nil, err
 	}
 
-	// if err := setTables(ctx, conn); err != nil {
-	// 	return nil, err
-	// }
+	if err := runMigrations(connstr); err != nil {
+		return nil, err
+	}
 
 	return conn, nil
 }
 
-func setTables(ctx context.Context, conn *pgx.Conn) error {
-	query := `
-	CREATE TABLE IF NOT EXISTS tasks (
-	id SERIAL PRIMARY KEY,
-	name VARCHAR(20) NOT NULL,
-	text VARCHAR(200) NOT NULL,
-	time_add TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	is_done BOOLEAN NOT NULL,
-	time_done TIMESTAMP
-	)
-	`
+func runMigrations(databaseURL string) error {
 
-	_, err := conn.Exec(ctx, query)
-	return err
+	m, err := migrate.New(
+		"file://internal/infrastructure/migrations",
+		databaseURL,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+		return err
+	}
+
+	fmt.Println("Migrations applied successfully")
+	return nil
 }
 
 func (p *PostgresRepo) AddTask(ctx context.Context, t *entity.Task) error {

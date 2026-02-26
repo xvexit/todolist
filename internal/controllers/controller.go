@@ -27,8 +27,15 @@ func (c *Controller) HandlerAddTask(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	var task TaskDto
 
-	if err := json.NewDecoder(r.Body).Decode(&task); err != nil {
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&task); err != nil {
 		http.Error(w, NewErrorDto(err.Error()).ToString(), http.StatusBadRequest)
+		return
+	}
+
+	if task.Name == "" || task.Text == "" {
+		http.Error(w, "name and text are required", http.StatusBadRequest)
 		return
 	}
 
@@ -39,7 +46,7 @@ func (c *Controller) HandlerAddTask(w http.ResponseWriter, r *http.Request) {
 
 	b, err := json.MarshalIndent(task, "", "    ")
 	if err != nil {
-		http.Error(w, NewErrorDto(err.Error()).ToString(), http.StatusInternalServerError)
+		http.Error(w, NewErrorDto(err.Error()).ToString(), http.StatusInternalServerError)	// сделать чтобы вытаскивал из юзкейса ентити
 		return
 	}
 
@@ -61,7 +68,7 @@ func (c *Controller) HandleTaskList(w http.ResponseWriter, r *http.Request) {
 
 	b, err := json.MarshalIndent(tasks, "", "    ")
 	if err != nil {
-		http.Error(w, NewErrorDto(err.Error()).ToString(), http.StatusInternalServerError)
+		http.Error(w, NewErrorDto(err.Error()).ToString(), http.StatusInternalServerError)		
 		return
 	}
 
@@ -89,13 +96,13 @@ func (c *Controller) HandleDeleteTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := c.uc.DelTask(ctx, id); err != nil{
+	if err := c.uc.DelTask(ctx, id); err != nil {
 		http.Error(w, NewErrorDto(err.Error()).ToString(), http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	if _, err := w.Write([]byte("Deleted!")); err != nil{
+	if _, err := w.Write([]byte("Deleted!")); err != nil {
 		fmt.Println("failed to write HTTP response", err)
 		return
 	}
@@ -118,7 +125,7 @@ func (c *Controller) HandleDoTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := c.uc.DoTask(ctx, id); err != nil{
+	if err := c.uc.DoTask(ctx, id); err != nil {
 		http.Error(w, NewErrorDto(err.Error()).ToString(), http.StatusInternalServerError)
 		return
 	}

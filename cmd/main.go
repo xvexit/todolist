@@ -29,8 +29,12 @@ func main() {
 
 	controller := controllers.NewController(uc)
 	server := server.NewHTTPServer(controller)
-	if err := server.StartHttpServer(); err != nil {
+	
+	go func(){
+		if err := server.StartHttpServer(); err != nil {
 		fmt.Println("Server starting error:", err)
-	}
+	}	
+	}()
+	<-make(chan struct{})
 
 }
