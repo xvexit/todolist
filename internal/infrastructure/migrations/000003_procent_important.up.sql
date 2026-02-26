@@ -1,0 +1,8 @@
+ALTER TABLE tasks ALTER COLUMN is_important DROP DEFAULT;
+ALTER TABLE tasks 
+ALTER COLUMN is_important TYPE INTEGER
+USING CASE 
+    WHEN is_important THEN 1 
+    ELSE 0
+END;
+ALTER TABLE tasks ALTER COLUMN is_important SET DEFAULT 0;
